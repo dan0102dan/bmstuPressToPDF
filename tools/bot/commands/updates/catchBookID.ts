@@ -1,9 +1,7 @@
 import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { getBook, getBookURL } from '../../../../functions'
-// import { dir } from '../../../../config'
 import { helloMes } from '../responses'
-// import fs from 'fs'
 
 export default async (ctx) => {
 	try {
@@ -55,16 +53,18 @@ export default async (ctx) => {
 
 		await browser.close()
 
-		// fs.mkdirSync(dir, { recursive: true })
-		// fs.writeFileSync(`${dir}/${book.name}.pdf`, await pdfDoc.save())
 		await ctx.telegram.editMessageText(
 			ctx.chat.id, mes.message_id, '',
 			'Загрузка завершена'
 		)
 
-		await ctx.replyWithDocument({
-			source: await pdfDoc.save()
-		})
+		await ctx.replyWithDocument(
+			{
+				source: Buffer.from(await pdfDoc.save()),
+				filename: `${book.name}.pdf`
+			}
+		)
+		await ctx.telegram.deleteMessage(ctx.chat.id, mes.message_id)
 	} catch (e) {
 		switch (e.response?.status || e.response?.error_code) {
 			case 403:
@@ -75,7 +75,6 @@ export default async (ctx) => {
 				return await ctx.reply('Сайт не доступен, попробуйте позже')
 
 			default:
-				console.error(e)
 				throw (e)
 		}
 	}
