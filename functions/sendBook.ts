@@ -3,6 +3,8 @@ import { bot } from '../tools'
 import { PDFDocument } from 'pdf-lib'
 import { getBook, getBookURL } from './'
 import { setTimeout } from 'timers/promises'
+import { dir } from '../config'
+import fs from 'fs'
 
 export default async (chatId, bookId) => {
     const mes = await bot.telegram.sendMessage(chatId, 'Дождитесь окончания загрузки!')
@@ -19,11 +21,13 @@ export default async (chatId, bookId) => {
         const browser = await puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless', '--disable-gpu']
         })
+
         await bot.telegram.editMessageText(
             chatId, mes.message_id, '',
             'Создаём PDF документ...'
         )
-        const pdfDoc = await PDFDocument.create()
+        fs.mkdirSync(dir, { recursive: true })
+        const pdfPath = `${dir}/${[...Array(20)].map(() => (~~(Math.random() * 36)).toString(36)).join('')}.pdf`
 
         await bot.telegram.editMessageText(
             chatId, mes.message_id, '',
@@ -51,9 +55,13 @@ export default async (chatId, bookId) => {
             })
             await tab.close()
 
+            const pdfDoc = (page === 1) ? await PDFDocument.create() : await PDFDocument.load(fs.readFileSync(pdfPath))
+
             const pdf = await PDFDocument.load(buffer)
             const copiedPages = await pdfDoc.copyPages(pdf, pdf.getPageIndices())
             copiedPages.forEach((e) => pdfDoc.addPage(e))
+
+            fs.writeFileSync(pdfPath, await pdfDoc.save())
 
             await bot.telegram.editMessageText(
                 chatId, mes.message_id, '',
@@ -71,10 +79,12 @@ export default async (chatId, bookId) => {
         await bot.telegram.sendDocument(
             chatId,
             {
-                source: Buffer.from(await pdfDoc.save()),
+                source: pdfPath,
                 filename: `${book.name}.pdf`
             }
         )
+        fs.rmSync(pdfPath)
+
         await bot.telegram.deleteMessage(chatId, mes.message_id)
     }
     catch (e) {
