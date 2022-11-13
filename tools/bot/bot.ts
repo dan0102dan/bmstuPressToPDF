@@ -1,7 +1,7 @@
 import { Telegraf, Scenes, session } from 'telegraf'
 import { mainBot } from '../../config'
 
-import { helloMes } from './commands/responses'
+import { helloMes, menu } from './commands/responses'
 import { cancel, getbook } from './commands/stage'
 
 const stage = new Scenes.Stage<Scenes.WizardContext>([getbook])
@@ -17,9 +17,13 @@ bot.use(session())
 bot.use(stage.middleware())
 
 bot.catch(console.error)
-// приветствие
+
 bot.start(helloMes)
 
+bot.command('menu', menu)
+bot.action('menu', menu)
+
 bot.command('getbook', (ctx) => ctx.scene.enter('getbook'))
+bot.action('getbook', (ctx) => ctx.scene.enter('getbook'))
 
 export default bot
