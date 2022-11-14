@@ -19,7 +19,7 @@ export default async (chatId, bookId) => {
             'Запускаем браузер...'
         )
         const browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless', '--disable-gpu']
+            args: ['--incognito', '--headless', '--disable-gpu', '--full-memory-crash-report', '--unlimited-storage', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--no-zygote']
         })
 
         await bot.telegram.editMessageText(
