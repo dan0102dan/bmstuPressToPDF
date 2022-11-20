@@ -1,75 +1,51 @@
-import puppeteer from 'puppeteer'
+import wkhtmltopdf from 'wkhtmltopdf'
 import { bot } from '../tools'
-import { PDFDocument } from 'pdf-lib'
 import { getBook, getBookURL } from './'
-import { setTimeout } from 'timers/promises'
+// import { setTimeout } from 'timers/promises'
 import { dir } from '../config'
 import fs from 'fs'
 
 export default async (chatId, bookId) => {
     const mes = await bot.telegram.sendMessage(chatId, 'Дождитесь окончания загрузки!')
-    await setTimeout(2500)
+    // await setTimeout(2500)
 
     try {
         const book = await getBook(bookId)
-        const url = await getBookURL(book.readerLink)
-
-        await bot.telegram.editMessageText(
-            chatId, mes.message_id, '',
-            'Запускаем браузер...'
-        )
-        const browser = await puppeteer.launch({
-            args: ['--incognito', '--headless', '--disable-gpu', '--full-memory-crash-report', '--unlimited-storage', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--no-zygote']
-        })
-
-        await bot.telegram.editMessageText(
-            chatId, mes.message_id, '',
-            'Создаём PDF документ...'
-        )
-        fs.mkdirSync(dir, { recursive: true })
-        const pdfPath = `${dir}/${[...Array(20)].map(() => (~~(Math.random() * 36)).toString(36)).join('')}.pdf`
-
-        await bot.telegram.editMessageText(
-            chatId, mes.message_id, '',
-            'Загружаем...'
-        )
-
+        const url = await (await getBookURL(book.readerLink))
+        console.log(url)
         await bot.telegram.sendMessage(
             chatId,
             `<b>«${book.name}»</b>\n\n<b>Автор:</b> ${book.author}\n<b>Год издания:</b> ${book.year}\n<b>Кол-во страниц:</b> ${book.pagesCount}\n<a href="${book.cover}">Обложка</a>`,
             { parse_mode: 'HTML' }
         )
 
-        for (let page = 1; page <= book.pagesCount; page++) {
-            const XhtmlURL = url + 'mybook' + page.toString().padStart(4, '0') + '.xhtml'
-            // console.log(XhtmlURL)
+        fs.mkdirSync(dir, { recursive: true })
+        const bookPath = `${dir}/${[...Array(20)].map(() => (~~(Math.random() * 36)).toString(36)).join('')}.pdf`
 
-            const tab = await browser.newPage()
-            await tab.goto(XhtmlURL, { timeout: 0, waitUntil: 'networkidle0' })
-            console.log(`${page}-ая страница загружена`)
-            const buffer = await tab.pdf({
-                pageRanges: '1-1',
-                printBackground: true,
-                preferCSSPageSize: true,
-                format: 'A5',
-            })
-            await tab.close()
+        await bot.telegram.editMessageText(
+            chatId, mes.message_id, '',
+            'Загружаем...'
+        )
 
-            const pdfDoc = (page === 1) ? await PDFDocument.create() : await PDFDocument.load(fs.readFileSync(pdfPath))
-
-            const pdf = await PDFDocument.load(buffer)
-            const copiedPages = await pdfDoc.copyPages(pdf, pdf.getPageIndices())
-            copiedPages.forEach((e) => pdfDoc.addPage(e))
-
-            fs.writeFileSync(pdfPath, await pdfDoc.save())
-
-            await bot.telegram.editMessageText(
-                chatId, mes.message_id, '',
-                `Загрузка... (${(page / book.pagesCount * 100).toFixed(2)}%)`
+        await new Promise((resolve, reject) => {
+            const stream = wkhtmltopdf(
+                new Array(book.pagesCount).fill(0).map((e, i) => url + 'mybook' + (i + 1).toString().padStart(4, '0') + '.xhtml'),
+                {
+                    images: true,
+                    background: true,
+                    enableExternalLinks: true,
+                    enableForms: true,
+                    imageQuality: 100,
+                    printMediaType: true,
+                    disableSmartShrinking: true,
+                    headerSpacing: 0
+                }
             )
-        }
+            stream.on('error', reject)
+            stream.on('end', resolve)
 
-        await browser.close()
+            stream.pipe(fs.createWriteStream(bookPath))
+        })
 
         await bot.telegram.editMessageText(
             chatId, mes.message_id, '',
@@ -79,16 +55,17 @@ export default async (chatId, bookId) => {
         await bot.telegram.sendDocument(
             chatId,
             {
-                source: pdfPath,
+                source: bookPath,
                 filename: `${book.name}.pdf`
             }
         )
-        fs.rmSync(pdfPath)
+        fs.rmSync(bookPath)
 
         await bot.telegram.deleteMessage(chatId, mes.message_id)
     }
     catch (e) {
         console.error(e)
+
         bot.telegram.sendMessage(768331152, `error: ${e}`)
         switch (e.response?.status || e.response?.error_code) {
             case 403:

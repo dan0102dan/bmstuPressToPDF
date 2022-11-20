@@ -2,6 +2,7 @@
 	"compilerOptions": {
 		"esModuleInterop": true,
 		"downlevelIteration": true,
-		"removeComments": true
+		"removeComments": true,
+		"outDir": "./dist"
 	}
 }
