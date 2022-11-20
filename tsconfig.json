@@ -3,6 +3,7 @@
 		"esModuleInterop": true,
 		"downlevelIteration": true,
 		"removeComments": true,
-		"outDir": "./dist"
+		"outDir": "./dist",
+		"skipLibCheck": true
 	}
 }

@@ -1,4 +1,5 @@
-import wkhtmltopdf from 'wkhtmltopdf'
+import puppeteer from 'puppeteer'
+import { PDFDocument } from 'pdf-lib'
 import { bot } from '../tools'
 import { getBook, getBookURL } from './'
 // import { setTimeout } from 'timers/promises'
@@ -19,6 +20,14 @@ export default async (chatId, bookId) => {
             { parse_mode: 'HTML' }
         )
 
+        await bot.telegram.editMessageText(
+            chatId, mes.message_id, '',
+            'Запускаем браузер...'
+        )
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless', '--disable-gpu', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=DefaultPassthroughCommandDecoder', '--disable-gpu-sandbox']
+        })
+
         fs.mkdirSync(dir, { recursive: true })
         const bookPath = `${dir}/${[...Array(20)].map(() => (~~(Math.random() * 36)).toString(36)).join('')}.pdf`
 
@@ -27,25 +36,36 @@ export default async (chatId, bookId) => {
             'Загружаем...'
         )
 
-        await new Promise((resolve, reject) => {
-            const stream = wkhtmltopdf(
-                new Array(book.pagesCount).fill(0).map((e, i) => url + 'mybook' + (i + 1).toString().padStart(4, '0') + '.xhtml'),
-                {
-                    images: true,
-                    background: true,
-                    enableExternalLinks: true,
-                    enableForms: true,
-                    imageQuality: 100,
-                    printMediaType: true,
-                    disableSmartShrinking: true,
-                    headerSpacing: 0
-                }
-            )
-            stream.on('error', reject)
-            stream.on('end', resolve)
+        for (let page = 1; page <= book.pagesCount; page++) {
+            const XhtmlURL = url + 'mybook' + page.toString().padStart(4, '0') + '.xhtml'
+            // console.log(XhtmlURL)
 
-            stream.pipe(fs.createWriteStream(bookPath))
-        })
+            const tab = await browser.newPage()
+            await tab.goto(XhtmlURL, { timeout: 0, waitUntil: 'networkidle0' })
+            console.log(`${page}-ая страница загружена`)
+            const buffer = await tab.pdf({
+                pageRanges: '1-1',
+                printBackground: true,
+                preferCSSPageSize: true,
+                format: 'A5',
+            })
+            await tab.close()
+
+            const pdfDoc = (page === 1) ? await PDFDocument.create() : await PDFDocument.load(fs.readFileSync(bookPath))
+
+            const pdf = await PDFDocument.load(buffer)
+            const copiedPages = await pdfDoc.copyPages(pdf, pdf.getPageIndices())
+            copiedPages.forEach((e) => pdfDoc.addPage(e))
+
+            fs.writeFileSync(bookPath, await pdfDoc.save())
+
+            await bot.telegram.editMessageText(
+                chatId, mes.message_id, '',
+                `Загрузка... (${(page / book.pagesCount * 100).toFixed(2)}%)`
+            )
+        }
+
+        await browser.close()
 
         await bot.telegram.editMessageText(
             chatId, mes.message_id, '',
