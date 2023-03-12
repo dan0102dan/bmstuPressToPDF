@@ -1,7 +1,7 @@
 module.exports = {
 	apps: [
 		{
-			name: 'musicodBot',
+			name: 'bmstuPressBot',
 			script: 'node ./dist/bmstuPressBot.js',
 			autorestart: true
 		}
