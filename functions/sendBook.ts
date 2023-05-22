@@ -38,11 +38,10 @@ export default async (chatId, bookId) => {
 
         for (let page = 1; page <= book.pagesCount; page++) {
             const XhtmlURL = url + 'mybook' + page.toString().padStart(4, '0') + '.xhtml'
-            // console.log(XhtmlURL)
 
             const tab = await browser.newPage()
             await tab.goto(XhtmlURL, { timeout: 0, waitUntil: 'networkidle0' })
-            console.log(`${page}-ая страница загружена`)
+            console.log(`${page}-ая страница загружена (${XhtmlURL})`)
             const buffer = await tab.pdf({
                 pageRanges: '1-1',
                 printBackground: true,
