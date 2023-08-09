@@ -8,7 +8,8 @@ export default async (id) => {
         name: string
         author: string
         cover?: string
-        year: number
+        year: number,
+        subject: string
     }>{}
 
     const { data } = await bmstuAPI.get(`catalog/item/${id}/`)
@@ -20,6 +21,7 @@ export default async (id) => {
     book.author = $('body > section > div > div.content > div > div.book-wrapper > div.area-title > div.info__author > div:nth-child(2)').text().replace(/\s\s+/g, ' ').trim()
     book.cover = $('body > section > div > div.content > div > div.book-wrapper > div.cover > div.cover-wrapper > img').attr('src')
     book.year = Number($('body > section > div > div.content > div > div.book-wrapper > div.area-cost > div > div.data-list > div.item.d-none > div > ul > li:nth-child(3)').text().replace(/[^0-9]/g, ''))
+    book.subject = $('body > section > div > div > div > div.book-wrapper > div.area-title > div.info__rubric > a.category-pill.item').text().trim()
     // console.log(book)
     return book
 }
