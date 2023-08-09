@@ -90,7 +90,6 @@ export default async (chatId, bookId) => {
             }
             fs.mkdirSync(`${libDir}/${book.subject}`, { recursive: true })
             fs.copyFileSync(bookPath, libPath)
-            fs.rmSync(bookPath)
 
             await browser.close()
 
@@ -105,6 +104,7 @@ export default async (chatId, bookId) => {
                     filename: `${book.name}.pdf`
                 }
             )
+            fs.rmSync(bookPath)
         }
 
         await bot.telegram.deleteMessage(chatId, mes.message_id)
