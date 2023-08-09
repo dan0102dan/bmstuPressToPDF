@@ -17,11 +17,11 @@ export default async (chatId, bookId) => {
 
         await bot.telegram.sendMessage(
             chatId,
-            `<b>«${book.name}»</b>\n\n<b>Автор:</b> ${book.author}\n<b>Предмет:</b> ${book.subject}\n<b>Год издания:</b> ${book.year}\n<b>Кол-во страниц:</b> ${book.pagesCount}\n<a href="${book.cover}">Обложка</a>`,
+            `<b>${book.name}</b>\n\n<b>Автор:</b> ${book.author}\n<b>Предмет:</b> ${book.subject}\n<b>Год издания:</b> ${book.year}\n<b>Кол-во страниц:</b> ${book.pagesCount}\n<a href="${book.cover}">Обложка</a>`,
             { parse_mode: 'HTML' }
         )
 
-        const libPath = `${libDir}/${book.subject}/${book.name} [${bookId}].pdf`
+        const libPath = `${libDir}/${bookId}.pdf`
         if (fs.existsSync(libPath)) {
             await bot.telegram.editMessageText(
                 chatId, mes.message_id, '',
@@ -88,7 +88,7 @@ export default async (chatId, bookId) => {
                     `Загрузка... (${(page / book.pagesCount * 100).toFixed(2)}%)`
                 )
             }
-            fs.mkdirSync(`${libDir}/${book.subject}`, { recursive: true })
+            fs.mkdirSync(`${libDir}`, { recursive: true })
             fs.copyFileSync(bookPath, libPath)
 
             await browser.close()
