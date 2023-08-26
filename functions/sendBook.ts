@@ -3,7 +3,7 @@ import { PDFDocument } from 'pdf-lib'
 import { bot } from '../tools'
 import { getBook, getBookURL } from './'
 // import { setTimeout } from 'timers/promises'
-import { dir, libDir } from '../config'
+import { dir } from '../config'
 import fs from 'fs'
 
 export default async (chatId, bookId) => {
@@ -21,7 +21,7 @@ export default async (chatId, bookId) => {
             { parse_mode: 'HTML' }
         )
 
-        const libPath = `${libDir}/${bookId}.pdf`
+        const libPath = `${dir}/${bookId}.pdf`
         if (fs.existsSync(libPath)) {
             await bot.telegram.editMessageText(
                 chatId, mes.message_id, '',
@@ -63,7 +63,7 @@ export default async (chatId, bookId) => {
                     pageRanges: '1-1',
                     printBackground: true,
                     preferCSSPageSize: true,
-                    format: 'A5',
+                    format: 'A4'
                 })
                 await tab.close()
 
@@ -88,7 +88,6 @@ export default async (chatId, bookId) => {
                     `Загрузка... (${(page / book.pagesCount * 100).toFixed(2)}%)`
                 )
             }
-            fs.mkdirSync(`${libDir}`, { recursive: true })
             fs.copyFileSync(bookPath, libPath)
 
             await browser.close()
@@ -110,9 +109,6 @@ export default async (chatId, bookId) => {
         await bot.telegram.deleteMessage(chatId, mes.message_id)
     }
     catch (e) {
-        console.error(e)
-
-        bot.telegram.sendMessage(768331152, `error: ${e}`)
         switch (e.response?.status || e.response?.error_code) {
             case 403:
                 return await bot.telegram.editMessageText(
@@ -122,7 +118,7 @@ export default async (chatId, bookId) => {
             case 404:
                 return await bot.telegram.editMessageText(
                     chatId, mes.message_id, '',
-                    'Книга с таким id не найдена :('
+                    `Книга под номером ${bookId} не найдена`
                 )
             case 400:
                 return await bot.telegram.editMessageText(
@@ -130,6 +126,8 @@ export default async (chatId, bookId) => {
                     'Сайт не доступен, попробуйте позже 📛'
                 )
             default:
+                console.error(e)
+                bot.telegram.sendMessage(768331152, `error: ${e}`)
                 return await bot.telegram.editMessageText(
                     chatId, mes.message_id, '',
                     'Что-то произошло, выясняем'
