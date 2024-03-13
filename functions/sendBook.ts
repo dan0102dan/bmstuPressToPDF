@@ -12,7 +12,7 @@ export default async (chatId, bookId) => {
 
     try {
         const book = await getBook(bookId)
-        const url = await (await getBookURL(book.readerLink))
+        const url = await getBookURL(book.readerLink)
         console.log(book, url)
 
         await bot.telegram.sendMessage(
@@ -62,8 +62,7 @@ export default async (chatId, bookId) => {
                 const buffer = await tab.pdf({
                     pageRanges: '1-1',
                     printBackground: true,
-                    preferCSSPageSize: true,
-                    format: 'A4'
+                    preferCSSPageSize: true
                 })
                 await tab.close()
 
