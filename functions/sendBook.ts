@@ -42,7 +42,9 @@ export default async (chatId, bookId) => {
                 'Запускаем браузер...'
             )
             const browser = await puppeteer.launch({
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless', '--disable-gpu', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=DefaultPassthroughCommandDecoder', '--disable-gpu-sandbox']
+                executablePath: '/usr/bin/chromium-browser',
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=DefaultPassthroughCommandDecoder', '--disable-gpu-sandbox']
             })
 
             fs.mkdirSync(dir, { recursive: true })
@@ -58,13 +60,30 @@ export default async (chatId, bookId) => {
 
                 const tab = await browser.newPage()
                 await tab.goto(XhtmlURL, { timeout: 0, waitUntil: 'networkidle0' })
-                console.log(`${page}-ая страница загружена (${XhtmlURL})`)
+
+                const dimensions = await tab.evaluate(() => {
+                    const metaViewport = document.querySelector('meta[name="viewport"]')
+                    if (metaViewport) {
+                        const content = metaViewport.getAttribute('content')
+                        const widthMatch = content.match(/width=(\d+)/)
+                        const heightMatch = content.match(/height=(\d+)/)
+                        return {
+                            width: parseInt(widthMatch[1], 10),
+                            height: parseInt(heightMatch[1], 10)
+                        }
+                    }
+                })
+                console.log(dimensions)
+
                 const buffer = await tab.pdf({
+                    width: dimensions.width,
+                    height: dimensions.height,
+                    // format: 'A5',
                     pageRanges: '1-1',
-                    printBackground: true,
-                    preferCSSPageSize: true
+                    printBackground: true
                 })
                 await tab.close()
+                console.log(`${page}-ая страница загружена (${XhtmlURL})`)
 
                 const pdfDoc = (page === 1) ? await PDFDocument.create() : await PDFDocument.load(fs.readFileSync(bookPath), { updateMetadata: false })
                 if (page === 1) {
