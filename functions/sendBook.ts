@@ -76,8 +76,8 @@ export default async (chatId, bookId) => {
                 console.log(dimensions)
 
                 const buffer = await tab.pdf({
-                    width: dimensions.width,
-                    height: dimensions.height,
+                    width: dimensions.width * 0.75,
+                    height: dimensions.height * 0.75,
                     // format: 'A5',
                     pageRanges: '1-1',
                     printBackground: true
