@@ -44,7 +44,17 @@ export default async (chatId, bookId) => {
             const browser = await puppeteer.launch({
                 executablePath: '/usr/bin/chromium-browser',
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=DefaultPassthroughCommandDecoder', '--disable-gpu-sandbox']
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage',
+                    '--disable-extensions',
+                    '--disable-software-rasterizer',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding'
+                ],
             })
 
             fs.mkdirSync(dir, { recursive: true })
