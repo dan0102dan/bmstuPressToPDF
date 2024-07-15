@@ -22,6 +22,6 @@ export default async (id) => {
     book.cover = $('body > section > div > div.content > div > div.book-wrapper > div.cover > div.cover-wrapper > img').attr('src')
     book.year = Number($('body > section > div > div.content > div > div.book-wrapper > div.area-cost > div > div.data-list > div.item.d-none > div > ul > li:nth-child(3)').text().replace(/[^0-9]/g, ''))
     book.subject = $('body > section > div > div > div > div.book-wrapper > div.area-title > div.info__rubric > a.category-pill.item').text().trim().split('\n')[0].trim()
-    // console.log(book)
+
     return book
 }

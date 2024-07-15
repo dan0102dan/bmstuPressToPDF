@@ -2,13 +2,11 @@ import puppeteer from 'puppeteer'
 import { PDFDocument } from 'pdf-lib'
 import { bot } from '../tools'
 import { getBook, getBookURL } from './'
-// import { setTimeout } from 'timers/promises'
 import { dir } from '../config'
 import fs from 'fs'
 
 export default async (chatId, bookId) => {
     const mes = await bot.telegram.sendMessage(chatId, 'Дождитесь окончания загрузки!')
-    // await setTimeout(2500)
 
     try {
         const book = await getBook(bookId)
