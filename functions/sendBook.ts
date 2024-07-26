@@ -40,7 +40,7 @@ export default async (chatId, bookId) => {
                 'Запускаем браузер...'
             )
             const browser = await puppeteer.launch({
-                executablePath: '/usr/bin/chromium-browser',
+                executablePath: '/usr/bin/chromium',
                 headless: true,
                 args: [
                     '--no-sandbox',

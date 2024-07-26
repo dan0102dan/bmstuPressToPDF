@@ -9,9 +9,9 @@ stage.command('cancel', cancel)
 stage.action('cancel', cancel)
 
 const bot = new Telegraf<Scenes.SceneContext>(mainBot.id + ':' + mainBot.token, {
-	telegram: {
-		apiRoot: 'http://localhost:8081'
-	}
+	// telegram: {
+	// 	apiRoot: 'http://localhost:8081'
+	// }
 })
 bot.use(session())
 bot.use(stage.middleware())
